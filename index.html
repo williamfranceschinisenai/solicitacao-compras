@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Solicitação de Compras - SENAI Mirassol</title>
+
+  <!-- Estilização CSS base do Formulário -->
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }
+    .container { max-width: 900px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    h1 { color: #d32f2f; text-align: center; margin-bottom: 25px; font-size: 24px; border-bottom: 2px solid #d32f2f; padding-bottom: 10px; }
+    .section-title { background: #f0f0f0; padding: 8px 12px; font-weight: bold; margin-top: 20px; border-left: 4px solid #d32f2f; }
+    .form-group { margin-bottom: 15px; }
+    .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
+    .form-row .form-group { flex: 1; margin-bottom: 0; }
+    label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: #555; }
+    input[type="text"], input[type="number"], textarea, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+    input:focus, textarea:focus { border-color: #d32f2f; outline: none; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 13px; }
+    th { background-color: #f8f9fa; font-weight: bold; }
+    .btn-container { text-align: center; margin-top: 30px; display: flex; justify-content: center; gap: 15px; }
+    .btn { padding: 12px 25px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 14px; transition: background 0.2s; }
+    .btn-submit { background-color: #d32f2f; color: white; }
+    .btn-submit:hover { background-color: #b71c1c; }
+    .btn-clear { background-color: #757575; color: white; }
+    .btn-clear:hover { background-color: #616161; }
+  </style>
+
+  <!-- Biblioteca SweetAlert2 para Alertas Limpos e Elegantes (Sem iframe/endereço do Google) -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Solicitação de Compras - SENAI Mirassol</h1>
+
+    <form id="formSolicitacao" onsubmit="event.preventDefault(); enviarSolicitacao();">
+      
+      <!-- CABEÇALHO -->
+      <div class="section-title">Dados Gerais</div>
+      <div class="form-row" style="margin-top: 15px;">
+        <div class="form-group">
+          <label for="nif">NIF / Solicitante:</label>
+          <input type="text" id="nif" name="nif" required placeholder="Digite o seu NIF">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="centroCusto1">Centro de Custo 1:</label>
+          <input type="text" id="centroCusto1" name="centroCusto1" placeholder="Ex: 2096101001">
+        </div>
+        <div class="form-group">
+          <label for="rateio1">Rateio 1 (%):</label>
+          <input type="number" id="rateio1" name="rateio1" placeholder="Ex: 60">
+        </div>
+        <div class="form-group">
+          <label for="centroCusto2">Centro de Custo 2:</label>
+          <input type="text" id="centroCusto2" name="centroCusto2" placeholder="Ex: 2096101002">
+        </div>
+        <div class="form-group">
+          <label for="rateio2">Rateio 2 (%):</label>
+          <input type="number" id="rateio2" name="rateio2" placeholder="Ex: 40">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="curso1">Curso 1:</label>
+          <input type="text" id="curso1" name="curso1">
+        </div>
+        <div class="form-group">
+          <label for="alunos1">Nº Alunos 1:</label>
+          <input type="text" id="alunos1" name="alunos1">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="curso2">Curso 2:</label>
+          <input type="text" id="curso2" name="curso2">
+        </div>
+        <div class="form-group">
+          <label for="alunos2">Nº Alunos 2:</label>
+          <input type="text" id="alunos2" name="alunos2">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="aplicacao">Aplicação / Justificativa:</label>
+        <textarea id="aplicacao" name="aplicacao" rows="2" placeholder="Justificativa da compra..."></textarea>
+      </div>
+
+      <!-- ITENS -->
+      <div class="section-title">Itens Cotados</div>
+      <table id="tabelaItens">
+        <thead>
+          <tr>
+            <th style="width: 15%;">Código</th>
+            <th>Descrição do Item</th>
+            <th style="width: 12%;">Qtd.</th>
+            <th style="width: 18%;">Valor Unit. (R$)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Gerando 5 linhas iniciais para digitação -->
+          <script>
+            for (var i = 1; i <= 5; i++) {
+              document.write(`
+                <tr>
+                  <td><input type="text" id="codigo_${i}" name="codigo_${i}"></td>
+                  <td><input type="text" id="texto_${i}" name="texto_${i}"></td>
+                  <td><input type="number" id="qtd_${i}" name="qtd_${i}"></td>
+                  <td><input type="text" id="valorUnit_${i}" name="valorUnit_${i}" placeholder="0,00"></td>
+                </tr>
+              `);
+            }
+          </script>
+        </tbody>
+      </table>
+
+      <!-- OBSERVAÇÕES -->
+      <div class="section-title">Observações</div>
+      <div class="form-group" style="margin-top: 10px;">
+        <textarea id="observacoes" name="observacoes" rows="2" placeholder="Observações adicionais..."></textarea>
+      </div>
+
+      <!-- FORNECEDORES -->
+      <div class="section-title">Fornecedores Sugeridos / Encontrados</div>
+      <table id="tabelaFornecedores">
+        <thead>
+          <tr>
+            <th>Nome do Fornecedor</th>
+            <th style="width: 30%;">Contato / Cidade</th>
+            <th style="width: 25%;">Telefone</th>
+          </tr>
+        </thead>
+        <tbody>
+          <script>
+            for (var j = 1; j <= 3; j++) {
+              document.write(`
+                <tr>
+                  <td><input type="text" id="forn_nome_${j}"></td>
+                  <td><input type="text" id="forn_contato_${j}"></td>
+                  <td><input type="text" id="forn_tel_${j}"></td>
+                </tr>
+              `);
+            }
+          </script>
+        </tbody>
+      </table>
+
+      <!-- BOTÕES DE AÇÃO -->
+      <div class="btn-container">
+        <button type="button" class="btn btn-clear" onclick="confirmarLimpeza()">Limpar Formulário</button>
+        <button type="submit" class="btn btn-submit">Enviar e Gerar PDF</button>
+      </div>
+
+    </form>
+  </div>
+
+  <script>
+    // URL oficial da Web App implantada no Google Apps Script do SENAI
+    const URL_WEB_APP_GOOGLE = "https://script.google.com/a/macros/docente.senai.br/s/AKfycbyM8tVBPeJw8vf8wngIqb1_2l9EilNnM0mRT0ut8U54Ow0ORSUWnUZBdOuOmspV3pk2/exec";
+
+    /**
+     * Extrai os dados informados nos campos do formulário
+     */
+    function obterDadosDoFormulario() {
+      var itens = [];
+      for (var i = 1; i <= 5; i++) {
+        var cod = document.getElementById('codigo_' + i).value;
+        var txt = document.getElementById('texto_' + i).value;
+        var qtd = document.getElementById('qtd_' + i).value;
+        var val = document.getElementById('valorUnit_' + i).value;
+
+        if (cod || txt || qtd || val) {
+          itens.push({ codigo: cod, texto: txt, qtd: qtd, valorUnit: val });
+        }
+      }
+
+      var fornecedores = [];
+      for (var j = 1; j <= 3; j++) {
+        var fnome = document.getElementById('forn_nome_' + j).value;
+        var fcont = document.getElementById('forn_contato_' + j).value;
+        var ftel = document.getElementById('forn_tel_' + j).value;
+
+        if (fnome || fcont || ftel) {
+          fornecedores.push({ nome: fnome, contato: fcont, telefone: ftel });
+        }
+      }
+
+      return {
+        nif: document.getElementById('nif').value,
+        centroCusto1: document.getElementById('centroCusto1').value,
+        rateio1: document.getElementById('rateio1').value,
+        centroCusto2: document.getElementById('centroCusto2').value,
+        rateio2: document.getElementById('rateio2').value,
+        curso1: document.getElementById('curso1').value,
+        alunos1: document.getElementById('alunos1').value,
+        curso2: document.getElementById('curso2').value,
+        alunos2: document.getElementById('alunos2').value,
+        aplicacao: document.getElementById('aplicacao').value,
+        observacoes: document.getElementById('observacoes').value,
+        itens: itens,
+        fornecedores: fornecedores
+      };
+    }
+
+    /**
+     * Envia o formulário via API pública e substitui pop-ups nativos pelo SweetAlert2
+     */
+    function enviarSolicitacao() {
+      Swal.fire({
+        title: 'Processando solicitação...',
+        text: 'Aguarde enquanto preenchemos a planilha e geramos o PDF.',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      var payload = obterDadosDoFormulario();
+
+      fetch(URL_WEB_APP_GOOGLE, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(() => {
+        Swal.fire({
+          icon: 'success',
+          title: 'Solicitação Processada!',
+          text: 'Os dados foram salvos com sucesso na planilha.',
+          confirmButtonColor: '#d32f2f',
+          confirmButtonText: 'OK'
+        });
+      })
+      .catch((erro) => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Erro de Comunicação',
+          text: 'Falha ao processar a solicitação: ' + erro.message,
+          confirmButtonColor: '#d32f2f',
+          confirmButtonText: 'Entendido'
+        });
+      });
+    }
+
+    /**
+     * Confirmação visual para limpar o formulário
+     */
+    function confirmarLimpeza() {
+      Swal.fire({
+        title: 'Limpar formulário?',
+        text: "Todos os campos preenchidos serão resetados.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d32f2f',
+        cancelButtonColor: '#757575',
+        confirmButtonText: 'Sim, limpar',
+        cancelButtonText: 'Cancelar'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          document.getElementById('formSolicitacao').reset();
+          Swal.fire({
+            icon: 'success',
+            title: 'Limpo!',
+            text: 'O formulário foi restaurado com sucesso.',
+            timer: 1500,
+            showConfirmButton: false
+          });
+        }
+      });
+    }
+  </script>
+</body>
+</html>
